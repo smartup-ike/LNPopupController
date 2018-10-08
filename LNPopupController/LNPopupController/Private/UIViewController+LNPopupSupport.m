@@ -7,6 +7,7 @@
 //
 
 #import "UIViewController+LNPopupSupportPrivate.h"
+#import "LNPopupController.h"
 #import "LNPopupItem+Private.h"
 #import "_LNWeakRef.h"
 @import ObjectiveC;
@@ -179,7 +180,54 @@ static const void* _LNPopupBottomBarSupportKey = &_LNPopupBottomBarSupportKey;
 
 @end
 
+@interface UIViewController (LNCustomContainerPopupSupport) <LNPopupControllerDelegate> @end
+
 @implementation UIViewController (LNCustomContainerPopupSupport)
+
+- (void)_popupControllerStateWillChange:(LNPopupController *)popupController
+{
+	[self willChangeValueForKey:@"popupPresentationState"];
+}
+
+- (void)_popupControllerStateDidChange:(LNPopupController *)popupController
+{
+	[self didChangeValueForKey:@"popupPresentationState"];
+}
+
+//static NSString* __LogPresentationState(LNPopupPresentationState _popupControllerTargetState)
+//{
+//	return _popupControllerTargetState == LNPopupPresentationStateOpen ? @"open" : _popupControllerTargetState == LNPopupPresentationStateClosed ? @"close" : _popupControllerTargetState == LNPopupPresentationStateHidden ? @"hidden" : @"???";
+//}
+//
+- (void)_popupController:(LNPopupController*)popupController willTransitionFromState:(LNPopupPresentationState)before toState:(LNPopupPresentationState)after initialState:(LNPopupPresentationState)initial targetState:(LNPopupPresentationState)target
+{
+	if(target == LNPopupPresentationStateTransitioning)
+	{
+		return;
+	}
+	
+	if(target == LNPopupPresentationStateClosed)
+	{
+		if(initial == LNPopupPresentationStateHidden)
+		{
+			[self popupBarDidPresent];
+		}
+		else if(initial == LNPopupPresentationStateOpen)
+		{
+			[self popupDidClose];
+		}
+	}
+	else if(target == LNPopupPresentationStateOpen)
+	{
+		[self popupDidOpen];
+	}
+	else if(target == LNPopupPresentationStateHidden)
+	{
+		[self popupBarDidDismiss];
+	}
+	
+//	NSLog(@"👍 from: %@ to: %@ initial: %@ target: %@", __LogPresentationState(before), __LogPresentationState(after), __LogPresentationState(initial), __LogPresentationState(target));
+}
 
 - (LNPopupController *)_ln_popupController
 {
@@ -188,6 +236,7 @@ static const void* _LNPopupBottomBarSupportKey = &_LNPopupBottomBarSupportKey;
 	if(rv == nil)
 	{
 		rv = [[LNPopupController alloc] initWithContainerViewController:self];
+		rv.delegate = self;
 		objc_setAssociatedObject(self, _LNPopupControllerKey, rv, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 	}
 	

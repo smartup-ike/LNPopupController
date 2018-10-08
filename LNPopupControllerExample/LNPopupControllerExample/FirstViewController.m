@@ -57,6 +57,26 @@
 	[self _presentBar:nil];
 }
 
+- (void)popupBarDidPresent
+{
+	
+}
+
+- (void)popupBarDidDismiss
+{
+	
+}
+
+- (void)popupDidOpen
+{
+	
+}
+
+- (void)popupDidClose
+{
+	
+}
+
 - (IBAction)_changeBarStyle:(id)sender
 {
 	self.navigationController.toolbar.barStyle = 1 - self.navigationController.toolbar.barStyle;
@@ -164,7 +184,7 @@
 		[targetVC.popupBar setTintColor:[UIColor yellowColor]];
 	}
 
-	[targetVC presentPopupBarWithContentViewController:demoVC animated:YES completion:nil];
+	[targetVC presentPopupBarWithContentViewController:demoVC openPopup:YES animated:YES completion:nil];
 }
 
 - (IBAction)_dismissBar:(id)sender

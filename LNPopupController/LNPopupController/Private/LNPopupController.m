@@ -244,6 +244,42 @@ LNPopupCloseButtonStyle _LNPopupResolveCloseButtonStyleFromCloseButtonStyle(LNPo
 	NSLayoutConstraint* _popupCloseButtonHorizontalConstraint;
 	
 	id<UIViewControllerPreviewing> _previewingContext;
+	
+	LNPopupPresentationState _stateBeforeTransition;
+}
+
+- (void)setPopupControllerState:(LNPopupPresentationState)popupControllerState
+{
+	if(_popupControllerState == popupControllerState)
+	{
+		return;
+	}
+	
+	LNPopupPresentationState prevState = _popupControllerState;
+	if(prevState != LNPopupPresentationStateTransitioning)
+	{
+		_stateBeforeTransition = prevState;
+	}
+	LNPopupPresentationState nextState = popupControllerState;
+	
+	[self.delegate _popupControllerStateWillChange:self];
+	
+	[self willChangeValueForKey:@"popupControllerState"];
+	_popupControllerState = popupControllerState;
+	[self didChangeValueForKey:@"popupControllerState"];
+	
+//	if(_popupControllerState == LNPopupPresentationStateTransitioning)
+	{
+//		if(_popupControllerTargetState != LNPopupPresentationStateTransitioning && _lastUserNotifiedState != _popupControllerTargetState)
+		{
+			[self.delegate _popupController:self willTransitionFromState:prevState toState:nextState initialState:_stateBeforeTransition targetState:_popupControllerTargetState];
+//			
+//
+//			_lastUserNotifiedState = _popupControllerTargetState;
+		}
+	}
+	
+	[self.delegate _popupControllerStateDidChange:self];
 }
 
 - (instancetype)initWithContainerViewController:(__kindof UIViewController*)containerController
@@ -254,8 +290,8 @@ LNPopupCloseButtonStyle _LNPopupResolveCloseButtonStyleFromCloseButtonStyle(LNPo
 	{
 		_containerController = containerController;
 		
-		_popupControllerState = LNPopupPresentationStateHidden;
 		_popupControllerTargetState = LNPopupPresentationStateHidden;
+		_popupControllerState = LNPopupPresentationStateHidden;
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationWillEnterForeground) name:UIApplicationWillEnterForegroundNotification object:nil];
@@ -409,8 +445,8 @@ static CGFloat __smoothstep(CGFloat a, CGFloat b, CGFloat x)
 		[_currentContentController endAppearanceTransition];
 	};
 	
-	_popupControllerState = LNPopupPresentationStateTransitioning;
 	_popupControllerTargetState = state;
+	self.popupControllerState = LNPopupPresentationStateTransitioning;
 	
 	LNPopupInteractionStyle resolvedStyle = _LNPopupResolveInteractionStyleFromInteractionStyle(_containerController.popupInteractionStyle);
 	
@@ -476,7 +512,7 @@ static CGFloat __smoothstep(CGFloat a, CGFloat b, CGFloat x)
 			 UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, _popupContentView.popupCloseButton);
 		 }
 		 
-		 _popupControllerState = state;
+		 self.popupControllerState = state;
 
 		 if(completion)
 		 {
@@ -1168,15 +1204,15 @@ static void __LNPopupControllerDeeplyEnumerateSubviewsUsingBlock(UIView* view, v
 	{
 		_dismissalOverride = NO;
 		
+		_popupControllerTargetState = LNPopupPresentationStateClosed;
 		if(open)
 		{
-			_popupControllerState = LNPopupPresentationStateClosed;
+			self.popupControllerState = LNPopupPresentationStateClosed;
 		}
 		else
 		{
-			_popupControllerState = LNPopupPresentationStateTransitioning;
+			self.popupControllerState = LNPopupPresentationStateTransitioning;
 		}
-		_popupControllerTargetState = LNPopupPresentationStateClosed;
 		
 		_bottomBar = _containerController.bottomDockingViewForPopup_internalOrDeveloper;
 		
@@ -1215,7 +1251,7 @@ static void __LNPopupControllerDeeplyEnumerateSubviewsUsingBlock(UIView* view, v
 		} completion:^(BOOL finished) {
 			if(!open)
 			{
-				_popupControllerState = LNPopupPresentationStateClosed;
+				self.popupControllerState = LNPopupPresentationStateClosed;
 			}
 			
 			if(completionBlock != nil && !open)
@@ -1259,8 +1295,8 @@ static void __LNPopupControllerDeeplyEnumerateSubviewsUsingBlock(UIView* view, v
 	{
 		void (^dismissalAnimationCompletionBlock)(void) = ^
 		{
-			_popupControllerState = LNPopupPresentationStateTransitioning;
 			_popupControllerTargetState = LNPopupPresentationStateHidden;
+			self.popupControllerState = LNPopupPresentationStateTransitioning;
 			
 			[UIView animateWithDuration:animated ? 0.5 : 0.0 delay:0.0 usingSpringWithDamping:500 initialSpringVelocity:0 options:UIViewAnimationOptionCurveEaseInOut animations:^
 			 {
@@ -1271,7 +1307,7 @@ static void __LNPopupControllerDeeplyEnumerateSubviewsUsingBlock(UIView* view, v
 				 
 				 _LNPopupSupportFixInsetsForViewController(_containerController, YES, - oldHeight);
 			 } completion:^(BOOL finished) {
-				 _popupControllerState = LNPopupPresentationStateHidden;
+				 self.popupControllerState = LNPopupPresentationStateHidden;
 				 
 				 CGRect bottomBarFrame = [_containerController defaultFrameForBottomDockingView_internalOrDeveloper];
 				 bottomBarFrame.origin.y -= _cachedInsets.bottom;

@@ -12,9 +12,21 @@
 #import "LNPopupCloseButton.h"
 #import "LNPopupContentView.h"
 
+@class LNPopupController;
+
+@protocol LNPopupControllerDelegate <NSObject>
+
+- (void)_popupController:(LNPopupController*)popupController willTransitionFromState:(LNPopupPresentationState)before toState:(LNPopupPresentationState)after initialState:(LNPopupPresentationState)initial targetState:(LNPopupPresentationState)target;
+- (void)_popupControllerStateWillChange:(LNPopupController*)popupController;
+- (void)_popupControllerStateDidChange:(LNPopupController*)popupController;
+
+@end
+
 @interface LNPopupController : NSObject
 
 - (instancetype)initWithContainerViewController:(__kindof UIViewController*)containerController;
+
+@property (nonatomic, weak) id<LNPopupControllerDelegate> delegate;
 
 @property (nonatomic, weak) UIView* bottomBar;
 

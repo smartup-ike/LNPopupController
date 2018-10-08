@@ -159,6 +159,8 @@ typedef NS_ENUM(NSUInteger, LNPopupPresentationState){
 
 /**
  * The state of the popup presentation. (read-only)
+ *
+ * This property is key value observing compliant.
  */
 @property (nonatomic, readonly) LNPopupPresentationState popupPresentationState;
 
@@ -171,6 +173,15 @@ typedef NS_ENUM(NSUInteger, LNPopupPresentationState){
  * The popup presentation container view controller of the receiver. If the receiver is not part of a popover presentation, the property will be @c nil. (read-only)
  */
 @property (nullable, nonatomic, weak, readonly) __kindof UIViewController* popupPresentationContainerViewController;
+
+@end
+
+@interface UIViewController (LNPopupLifecycle)
+
+- (void)popupBarDidPresent;
+- (void)popupDidOpen;
+- (void)popupDidClose;
+- (void)popupBarDidDismiss;
 
 @end
 
